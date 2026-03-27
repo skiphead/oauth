@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/skiphead/salutespeech/types"
 )
 
 // OAuthClient handles OAuth authentication
@@ -23,7 +22,7 @@ type OAuthClient struct {
 	httpClient *http.Client
 	oauthURL   string
 	authHeader string
-	scope      types.Scope
+	scope      Scope
 	logger     *slog.Logger
 	closeCh    chan struct{}
 	closeOnce  sync.Once
@@ -32,7 +31,7 @@ type OAuthClient struct {
 // Config represents OAuth client configuration
 type Config struct {
 	AuthKey       string
-	Scope         types.Scope
+	Scope         Scope
 	OAuthURL      string
 	Timeout       time.Duration
 	AllowInsecure bool
@@ -43,10 +42,10 @@ type Config struct {
 func NewOAuthClient(cfg Config) (*OAuthClient, error) {
 	// Validate required fields
 	if cfg.AuthKey == "" {
-		return nil, fmt.Errorf("%w: auth key is required", types.ErrAuthKeyRequired)
+		return nil, fmt.Errorf("%w: auth key is required", ErrAuthKeyRequired)
 	}
 	if cfg.Scope == "" {
-		return nil, fmt.Errorf("%w: scope is required", types.ErrScopeRequired)
+		return nil, fmt.Errorf("%w: scope is required", ErrScopeRequired)
 	}
 
 	// Unified logger handling: fallback to default if nil
@@ -59,15 +58,15 @@ func NewOAuthClient(cfg Config) (*OAuthClient, error) {
 	oauthURL, err := sanitizeURL(cfg.OAuthURL)
 	if err != nil {
 		logger.Warn("invalid OAuth URL, using default", slog.String("error", err.Error()))
-		oauthURL = types.DefaultOAuthURL
+		oauthURL = DefaultOAuthURL
 	}
 	if oauthURL == "" {
-		oauthURL = types.DefaultOAuthURL
+		oauthURL = DefaultOAuthURL
 	}
 
 	timeout := cfg.Timeout
 	if timeout == 0 {
-		timeout = types.DefaultTimeout
+		timeout = DefaultTimeout
 	}
 
 	transport := &http.Transport{
@@ -99,7 +98,7 @@ func NewOAuthClient(cfg Config) (*OAuthClient, error) {
 }
 
 // RequestToken requests new token from OAuth server
-func (c *OAuthClient) RequestToken(ctx context.Context) (*types.Token, error) {
+func (c *OAuthClient) RequestToken(ctx context.Context) (*Token, error) {
 	// Check if client is closed
 	select {
 	case <-c.closeCh:
@@ -142,7 +141,7 @@ func (c *OAuthClient) RequestToken(ctx context.Context) (*types.Token, error) {
 		return nil, fmt.Errorf("token error %d: %s", resp.StatusCode, string(body))
 	}
 
-	var tokenResp types.TokenResponse
+	var tokenResp TokenResponse
 	if err := json.Unmarshal(body, &tokenResp); err != nil {
 		return nil, fmt.Errorf("parse response: %w", err)
 	}
@@ -152,7 +151,7 @@ func (c *OAuthClient) RequestToken(ctx context.Context) (*types.Token, error) {
 		expiresIn = 30 * time.Minute
 	}
 
-	return &types.Token{
+	return &Token{
 		Value:     tokenResp.AccessToken,
 		ExpiresAt: time.Now().Add(expiresIn),
 	}, nil

@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skiphead/salutespeech/types"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -16,7 +15,7 @@ import (
 type TokenManager struct {
 	mu                 sync.RWMutex
 	client             *OAuthClient
-	currentToken       *types.Token
+	currentToken       *Token
 	refreshMargin      time.Duration
 	minRefreshInterval time.Duration
 	group              singleflight.Group
@@ -36,10 +35,10 @@ type TokenManagerConfig struct {
 // NewTokenManager creates new token manager
 func NewTokenManager(client *OAuthClient, cfg TokenManagerConfig) *TokenManager {
 	if cfg.RefreshMargin == 0 {
-		cfg.RefreshMargin = types.DefaultRefreshMargin
+		cfg.RefreshMargin = DefaultRefreshMargin
 	}
 	if cfg.MinRefreshInterval == 0 {
-		cfg.MinRefreshInterval = types.DefaultMinRefreshInt
+		cfg.MinRefreshInterval = DefaultMinRefreshInt
 	}
 
 	// Unified logger handling: fallback to default if nil
