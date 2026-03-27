@@ -1,4 +1,4 @@
-module github.com/skiphead/oauthclient
+module github.com/skiphead/oauth
 
 go 1.25.8
 
